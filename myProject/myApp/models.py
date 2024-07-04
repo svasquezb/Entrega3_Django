@@ -4,21 +4,24 @@ from django.urls import reverse
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField 
 
-class Productos(models.Model):
-    nombre = models.CharField(max_length=400)
-    precio = models.FloatField(max_length=10, default=0.0)
-    imagen = models.ImageField(null=True, blank=True, upload_to="Productos/",default="productos/producto-default.png")
-    descripcion = RichTextField(null=True, blank=True)
-    slug = models.SlugField(unique=True, null=True, max_length=400)
-    creado = models.DateTimeField(auto_now_add=True)
 
-    def get_absolute_url(self):
-        return reverse('producto-detail', kwargs={'pk':self.pk, 'slug':self.slug})
+class Productos(models.Model):
+    nombre = models.CharField(max_length=255)
+    descripcion = models.TextField()
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.IntegerField()
+    foto = models.ImageField(upload_to='productos/')
+    slug = models.SlugField(unique=True)
 
     def save(self, *args, **kwargs):
-        value = self.nombre ##Revisar estoo     
-        self.slug = slugify(value, allow_unicode=True)  
+        if not self.slug:
+            self.slug = slugify(self.nombre)
+            counter = 1
+            while Productos.objects.filter(slug=self.slug).exists():
+                self.slug = f"{slugify(self.nombre)}-{counter}"
+                counter += 1
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return '%s - %s' % (self.nombre, self.creado)
+
+    def str(self):
+        return self.nombre
